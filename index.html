@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Jungle Word Quest</title>
+  <style>
+    body {
+      margin: 0; padding: 0;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      background: url('https://cdn.pixabay.com/photo/2017/08/30/07/52/jungle-2695220_1280.jpg');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .container {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      max-width: 90%;
+    }
+    h1 {
+      font-size: 24px;
+      color: #2e8b57;
+      margin-bottom: 10px;
+    }
+    #clue-label {
+      font-weight: bold;
+      color: #4a7023;
+      margin-bottom: 5px;
+      font-size: 20px;
+    }
+    #question-word {
+      font-size: 20px;
+      color: #3b3b3b;
+      margin-bottom: 15px;
+    }
+    .phrase-box {
+      font-size: 26px;
+      letter-spacing: 3px;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      user-select: none;
+    }
+    .missing-letter {
+      border: 2px solid #888;
+      width: 32px;
+      height: 40px;
+      text-align: center;
+      margin: 0 4px;
+      font-size: 28px;
+      background-color: #fff;
+      border-radius: 6px;
+      font-weight: bold;
+      text-transform: lowercase;
+    }
+    .filled-letter {
+      margin: 0 6px;
+      font-weight: bold;
+      color: #2e8b57;
+      user-select: text;
+      white-space: pre;
+    }
+    .missing-letter.correct {
+      border-color: green;
+      background-color: #d4f8d4;
+    }
+    .missing-letter.wrong {
+      border-color: red;
+      background-color: #ffd6d6;
+    }
+    .celebration {
+      font-size: 32px;
+      animation: pop 0.5s ease-in-out infinite alternate;
+      color: #ff4500;
+    }
+    #progress {
+      margin-top: 10px;
+      height: 40px;
+      background: url('https://i.imgur.com/YT92xdl.png'); /* jungle vine background */
+      background-size: cover;
+      border-radius: 20px;
+      overflow: hidden;
+      position: relative;
+    }
+    #progress-bar {
+      height: 100%;
+      width: 0;
+      background: url('https://i.imgur.com/ZsE1K6E.png'); /* banana fill */
+      background-size: contain;
+      background-repeat: repeat-x;
+      transition: width 0.6s ease;
+    }
+    #stars {
+      margin-top: 10px;
+    }
+    .star {
+      width: 30px;
+      height: 30px;
+      display: inline-block;
+      background-image: url('https://upload.wikimedia.org/wikipedia/commons/1/18/Five-pointed_star.svg');
+      background-size: contain;
+      background-repeat: no-repeat;
+      filter: grayscale(100%);
+    }
+    .star.filled {
+      filter: grayscale(0%);
+    }
+    @keyframes pop {
+      from { transform: scale(1); }
+      to { transform: scale(1.1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="question-title">Question 1 of 10</h1>
+    <div id="clue-label">Meaning:</div>
+    <div id="question-word">shrink</div>
+    <div id="phrase-display" class="phrase-box"></div>
+    <div id="progress">
+      <div id="progress-bar"></div>
+    </div>
+    <div id="stars"></div>
+  </div>
+
+<audio id="correct-sound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3" preload="auto"></audio>
+
+<script>
+  const questions = [
+    { answer: "shrink", clue: "become smaller", type: "Meaning" },
+    { answer: "instead", clue: "in place of", type: "Meaning" },
+    { answer: "awful", clue: "unpleasant", type: "Meaning" },
+    { answer: "often", clue: "many times", type: "Meaning" },
+    { answer: "shrink", clue: "expand", type: "Opposite" },
+    { answer: "later", clue: "earlier", type: "Opposite" },
+    { answer: "quickly", clue: "slowly", type: "Opposite" },
+    { answer: "awful", clue: "pleasant", type: "Opposite" },
+    { answer: "", clue: "", type: "Opposite" },
+    { answer: "mouse", clue: "mice", type: "Plural" },
+    { answer: "vegetable", clue: "vegetables", type: "Plural" },
+    { answer: "button", clue: "buttons", type: "Plural" },
+    { answer: "shrink", clue: "shrank", type: "Past Tense" },
+    { answer: "go", clue: "went", type: "Past Tense" },
+    { answer: "eat", clue: "ate", type: "Past Tense" },
+    { answer: "hear", clue: "heard", type: "Past Tense" },
+    { answer: "surprise", clue: "surprised", type: "Past Tense" }
+  ];
+
+  function shuffle(array) {
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+  }
+  shuffle(questions);
+
+  let current = 0;
+  const correctSound = document.getElementById('correct-sound');
+  const progressBar = document.getElementById('progress-bar');
+  const starsContainer = document.getElementById('stars');
+
+  function createHintPhrase(phrase) {
+    const letters = phrase.split('');
+    const totalLetters = letters.filter(c => c !== ' ').length;
+    const totalToHide = Math.floor(totalLetters / 2);
+
+    let hiddenIndices = new Set();
+    while (hiddenIndices.size < totalToHide) {
+      let idx = Math.floor(Math.random() * letters.length);
+      if (letters[idx] !== ' ') {
+        hiddenIndices.add(idx);
+      }
+    }
+
+    let hintArr = letters.map((ch, i) => hiddenIndices.has(i) ? '_' : ch);
+    let missing = [];
+    hintArr.forEach((ch, i) => {
+      if (ch === '_') missing.push(letters[i]);
+    });
+
+    return { hintArr, missing };
+  }
+
+  function updateProgressBar() {
+    const progress = ((current) / questions.length) * 100;
+    progressBar.style.width = progress + '%';
+    updateStars();
+  }
+
+  function updateStars() {
+    starsContainer.innerHTML = '';
+    for (let i = 0; i < questions.length; i++) {
+      const star = document.createElement('div');
+      star.className = 'star' + (i < current ? ' filled' : '');
+      starsContainer.appendChild(star);
+    }
+  }
+
+  function renderQuestion() {
+    if (current >= questions.length) {
+      document.body.innerHTML = `
+        <div class="container">
+          <div class="celebration">🎉 You did it! Great Job! 🎉</div>
+        </div>
+      `;
+      return;
+    }
+
+    const q = questions[current];
+    const { hintArr, missing } = createHintPhrase(q.clue);
+
+    document.getElementById('question-title').textContent = `Question ${current + 1} of ${questions.length}`;
+    document.getElementById('clue-label').textContent = `${q.type}:`;
+    document.getElementById('question-word').textContent = q.answer;
+
+    updateProgressBar();
+
+    const phraseDisplay = document.getElementById('phrase-display');
+    phraseDisplay.innerHTML = '';
+
+    let inputIndex = 0;
+    const inputElements = [];
+
+    hintArr.forEach(ch => {
+      if (ch === '_') {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.maxLength = 1;
+        input.className = 'missing-letter';
+        input.dataset.index = inputIndex;
+        input.dataset.expected = missing[inputIndex];
+        input.addEventListener('input', () => validate(input, inputElements));
+        phraseDisplay.appendChild(input);
+        inputElements.push(input);
+        inputIndex++;
+      } else {
+        const span = document.createElement('span');
+        span.className = 'filled-letter';
+        span.textContent = ch;
+        phraseDisplay.appendChild(span);
+      }
+    });
+
+    if (inputElements.length > 0) {
+      inputElements[0].focus();
+    }
+  }
+
+  function validate(input, inputElements) {
+    const expected = input.dataset.expected.toLowerCase();
+    const given = input.value.toLowerCase();
+
+    if (given === expected) {
+      input.classList.remove('wrong');
+      input.classList.add('correct');
+      correctSound.play();
+
+      const currentIndex = parseInt(input.dataset.index);
+      const nextInput = inputElements[currentIndex + 1];
+      if (nextInput) {
+        nextInput.focus();
+      }
+    } else {
+      input.classList.remove('correct');
+      input.classList.add('wrong');
+      input.select();
+    }
+
+    const allCorrect = inputElements.every(inp => inp.value.toLowerCase() === inp.dataset.expected.toLowerCase());
+    if (allCorrect) {
+      setTimeout(() => {
+        current++;
+        renderQuestion();
+      }, 800);
+    }
+  }
+
+  renderQuestion();
+</script>
+</body>
+</html>
