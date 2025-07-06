@@ -19,7 +19,7 @@
       text-align: center;
     }
     .container {
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.4);
       padding: 20px;
       border-radius: 20px;
       box-shadow: 0 0 20px rgba(0,0,0,0.3);
@@ -81,21 +81,6 @@
       animation: pop 0.5s ease-in-out infinite alternate;
       color: #ff4500;
     }
-    #progress {
-      margin-top: 10px;
-      height: 40px;
-      background-size: cover;
-      border-radius: 20px;
-      overflow: hidden;
-      position: relative;
-    }
-    #progress-bar {
-      height: 100%;
-      width: 0;
-      background-size: contain;
-      background-repeat: repeat-x;
-      transition: width 0.6s ease;
-    }
     #stars {
       margin-top: 10px;
     }
@@ -109,7 +94,7 @@
       filter: grayscale(100%);
     }
     .star.filled {
-      filter: grayscale(0%);
+      filter: grayscale(0%) brightness(0) saturate(100%) sepia(1) hue-rotate(60deg) brightness(1.5);
     }
     @keyframes pop {
       from { transform: scale(1); }
@@ -123,9 +108,6 @@
     <div id="clue-label">Meaning:</div>
     <div id="question-word">shrink</div>
     <div id="phrase-display" class="phrase-box"></div>
-    <div id="progress">
-      <div id="progress-bar"></div>
-    </div>
     <div id="stars"></div>
   </div>
 
@@ -161,7 +143,6 @@
 
   let current = 0;
   const correctSound = document.getElementById('correct-sound');
-  const progressBar = document.getElementById('progress-bar');
   const starsContainer = document.getElementById('stars');
 
   function createHintPhrase(phrase) {
@@ -184,12 +165,6 @@
     });
 
     return { hintArr, missing };
-  }
-
-  function updateProgressBar() {
-    const progress = ((current) / questions.length) * 100;
-    progressBar.style.width = progress + '%';
-    updateStars();
   }
 
   function updateStars() {
@@ -218,7 +193,7 @@
     document.getElementById('clue-label').textContent = `${q.type}:`;
     document.getElementById('question-word').textContent = q.answer;
 
-    updateProgressBar();
+    updateStars();
 
     const phraseDisplay = document.getElementById('phrase-display');
     phraseDisplay.innerHTML = '';
