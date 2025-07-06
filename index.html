@@ -81,17 +81,6 @@
       animation: pop 0.5s ease-in-out infinite alternate;
       color: #ff4500;
     }
-    #stars {
-      margin-top: 10px;
-    }
-    .star {
-      width: 30px;
-      height: 30px;
-      display: inline-block;
-      background-image: url('https://upload.wikimedia.org/wikipedia/commons/1/18/Five-pointed_star.svg');
-      background-size: contain;
-      background-repeat: no-repeat;
-    }
     @keyframes pop {
       from { transform: scale(1); }
       to { transform: scale(1.1); }
@@ -104,7 +93,6 @@
     <div id="clue-label">Meaning:</div>
     <div id="question-word">shrink</div>
     <div id="phrase-display" class="phrase-box"></div>
-    <div id="stars"></div>
   </div>
 
 <audio id="correct-sound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3" preload="auto"></audio>
@@ -139,7 +127,6 @@
 
   let current = 0;
   const correctSound = document.getElementById('correct-sound');
-  const starsContainer = document.getElementById('stars');
 
   function createHintPhrase(phrase) {
     const letters = phrase.split('');
@@ -163,15 +150,6 @@
     return { hintArr, missing };
   }
 
-  function updateStars() {
-    starsContainer.innerHTML = '';
-    for (let i = 0; i < current; i++) {
-      const star = document.createElement('div');
-      star.className = 'star';
-      starsContainer.appendChild(star);
-    }
-  }
-
   function renderQuestion() {
     if (current >= questions.length) {
       document.body.innerHTML = `
@@ -188,8 +166,6 @@
     document.getElementById('question-title').textContent = `Question ${current + 1} of ${questions.length}`;
     document.getElementById('clue-label').textContent = `${q.type}:`;
     document.getElementById('question-word').textContent = q.answer;
-
-    updateStars();
 
     const phraseDisplay = document.getElementById('phrase-display');
     phraseDisplay.innerHTML = '';
